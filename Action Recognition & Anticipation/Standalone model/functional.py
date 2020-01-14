@@ -1,17 +1,20 @@
 from __future__ import division
-import torch
+
+import collections
 import math
+import numbers
 import random
-from PIL import Image, ImageOps, ImageEnhance, PILLOW_VERSION
+import types
+import warnings
+
+import numpy as np
+import torch
+from PIL import PILLOW_VERSION, Image, ImageEnhance, ImageOps
+
 try:
     import accimage
 except ImportError:
     accimage = None
-import numpy as np
-import numbers
-import types
-import collections
-import warnings
 
 
 def _is_pil_image(img):

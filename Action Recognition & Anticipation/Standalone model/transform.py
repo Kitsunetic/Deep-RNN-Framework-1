@@ -1,18 +1,22 @@
 from __future__ import division
-import torch
+
+import collections
 import math
+import numbers
 import random
-from PIL import Image, ImageOps, ImageEnhance
+import types
+import warnings
+
+import numpy as np
+import torch
+from PIL import Image, ImageEnhance, ImageOps
+
+from functional import *
+
 try:
     import accimage
 except ImportError:
     accimage = None
-import numpy as np
-import numbers
-import types
-import collections
-import warnings
-from functional import *
 
 __all__ = ["Compose", "ToTensor", "ToPILImage", "Normalize", "Resize", "CenterCrop", "Pad",
            "Lambda", "RandomApply", "RandomChoice", "RandomOrder", "RandomCrop", "RandomHorizontalFlip",
@@ -1061,4 +1065,3 @@ class RandomGrayscale(object):
 
     def __repr__(self):
         return self.__class__.__name__ + '(p={0})'.format(self.p)
-

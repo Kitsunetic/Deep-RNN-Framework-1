@@ -1,9 +1,11 @@
+import random
+
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
 from torch.autograd import Variable
+
 from sync_batchnorm import SynchronizedBatchNorm2d
-import random
 
 
 class DRNN(nn.Module):
@@ -239,5 +241,3 @@ def actionModel(num_action, batch_norm=False, dropout=[0, 0], test_scheme=1, TD_
     model = DRNN(batch_norm, num_action, dropout=dropout, test_scheme=test_scheme, TD_rate=TD_rate, img_size=image_size, syn_bn=syn_bn)
 
     return model
-
-

@@ -8,7 +8,7 @@
 # https://github.com/vacancy/Synchronized-BatchNorm-PyTorch
 # Distributed under MIT License.
 
-import Queue as queue
+from queue import Queue
 import collections
 import threading
 

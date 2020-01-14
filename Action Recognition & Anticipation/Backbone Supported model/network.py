@@ -1,15 +1,17 @@
+import random
+
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
-from torch.autograd import Variable
-import torchvision.models as models
 import torch.utils.model_zoo as model_zoo
+import torchvision.models as models
+from torch.autograd import Variable
+
 from sync_batchnorm import SynchronizedBatchNorm2d
-import random
+
+
 class SNN(nn.Module):
-
     def __init__(self, net_dict, batch_norm, num_action, dropout, RNN_layer, channels, test_scheme=1, detachout=0.0):
-
         super(SNN, self).__init__()
 
         self.dropout1 = nn.Dropout2d(p = dropout[0])
@@ -19,21 +21,23 @@ class SNN(nn.Module):
         self.init_weight(self.vgg)
 
         self.channel_times = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-        self.RNN = nn.ModuleList([self.make_RNNCell(channels * (self.channel_times[0]), channels * (self.channel_times[1] + self.channel_times[0]), channels * self.channel_times[1], batch_norm, detachout), # comment for 3 layer
-                                  self.make_RNNCell(channels * (self.channel_times[1]), channels * (self.channel_times[2] + self.channel_times[1]), channels * self.channel_times[2], batch_norm, detachout),
-                                  self.make_RNNCell(channels * (self.channel_times[2]), channels *  (self.channel_times[3] + self.channel_times[2]), channels * self.channel_times[3], batch_norm, detachout),
-                                  self.make_RNNCell(channels * (self.channel_times[3]), channels *  (self.channel_times[4] + self.channel_times[3]), channels * self.channel_times[4], batch_norm, detachout),
-                                  self.make_RNNCell(channels * (self.channel_times[4]), channels *  (self.channel_times[5] + self.channel_times[4]), channels * self.channel_times[5], batch_norm, detachout, pool=True),
-                                  self.make_RNNCell(channels * (self.channel_times[5]), channels *  (self.channel_times[6] + self.channel_times[5]), channels * self.channel_times[6], batch_norm, detachout),  # comment for 3 layer
-                                  self.make_RNNCell(channels * (self.channel_times[6]), channels *  (self.channel_times[7] + self.channel_times[6]), channels * self.channel_times[7], batch_norm, detachout),
-                                  self.make_RNNCell(channels * (self.channel_times[7]), channels *  (self.channel_times[8] + self.channel_times[7]), channels * self.channel_times[8], batch_norm, detachout),
-                                  self.make_RNNCell(channels * (self.channel_times[8]), channels *  (self.channel_times[9] + self.channel_times[8]), channels * self.channel_times[9], batch_norm, detachout),
-                                  self.make_RNNCell(channels * (self.channel_times[9]), channels *  (self.channel_times[10] + self.channel_times[9]), channels * self.channel_times[10], batch_norm, detachout, pool=True),
-                                  self.make_RNNCell(channels * (self.channel_times[10]), channels *  (self.channel_times[11] + self.channel_times[10]), channels * self.channel_times[11], batch_norm, detachout),  # comment for 3 layer
-                                  self.make_RNNCell(channels * (self.channel_times[11]), channels *  (self.channel_times[12] + self.channel_times[11]), channels * self.channel_times[12], batch_norm, detachout),
-                                  self.make_RNNCell(channels * (self.channel_times[12]), channels *  (self.channel_times[13] + self.channel_times[12]), channels* self.channel_times[13], batch_norm, detachout),
-                                  self.make_RNNCell(channels * (self.channel_times[13]), channels *  (self.channel_times[14] + self.channel_times[13]), channels* self.channel_times[14], batch_norm, detachout),
-                                  self.make_RNNCell(channels * (self.channel_times[14]), channels *  (self.channel_times[15] + self.channel_times[14]), channels* self.channel_times[15], batch_norm, detachout, pool=True)])
+        self.RNN = nn.ModuleList([
+            self.make_RNNCell(channels * (self.channel_times[0]), channels * (self.channel_times[1] + self.channel_times[0]), channels * self.channel_times[1], batch_norm, detachout), # comment for 3 layer
+            self.make_RNNCell(channels * (self.channel_times[1]), channels * (self.channel_times[2] + self.channel_times[1]), channels * self.channel_times[2], batch_norm, detachout),
+            self.make_RNNCell(channels * (self.channel_times[2]), channels *  (self.channel_times[3] + self.channel_times[2]), channels * self.channel_times[3], batch_norm, detachout),
+            self.make_RNNCell(channels * (self.channel_times[3]), channels *  (self.channel_times[4] + self.channel_times[3]), channels * self.channel_times[4], batch_norm, detachout),
+            self.make_RNNCell(channels * (self.channel_times[4]), channels *  (self.channel_times[5] + self.channel_times[4]), channels * self.channel_times[5], batch_norm, detachout, pool=True),
+            self.make_RNNCell(channels * (self.channel_times[5]), channels *  (self.channel_times[6] + self.channel_times[5]), channels * self.channel_times[6], batch_norm, detachout),  # comment for 3 layer
+            self.make_RNNCell(channels * (self.channel_times[6]), channels *  (self.channel_times[7] + self.channel_times[6]), channels * self.channel_times[7], batch_norm, detachout),
+            self.make_RNNCell(channels * (self.channel_times[7]), channels *  (self.channel_times[8] + self.channel_times[7]), channels * self.channel_times[8], batch_norm, detachout),
+            self.make_RNNCell(channels * (self.channel_times[8]), channels *  (self.channel_times[9] + self.channel_times[8]), channels * self.channel_times[9], batch_norm, detachout),
+            self.make_RNNCell(channels * (self.channel_times[9]), channels *  (self.channel_times[10] + self.channel_times[9]), channels * self.channel_times[10], batch_norm, detachout, pool=True),
+            self.make_RNNCell(channels * (self.channel_times[10]), channels *  (self.channel_times[11] + self.channel_times[10]), channels * self.channel_times[11], batch_norm, detachout),  # comment for 3 layer
+            self.make_RNNCell(channels * (self.channel_times[11]), channels *  (self.channel_times[12] + self.channel_times[11]), channels * self.channel_times[12], batch_norm, detachout),
+            self.make_RNNCell(channels * (self.channel_times[12]), channels *  (self.channel_times[13] + self.channel_times[12]), channels* self.channel_times[13], batch_norm, detachout),
+            self.make_RNNCell(channels * (self.channel_times[13]), channels *  (self.channel_times[14] + self.channel_times[13]), channels* self.channel_times[14], batch_norm, detachout),
+            self.make_RNNCell(channels * (self.channel_times[14]), channels *  (self.channel_times[15] + self.channel_times[14]), channels* self.channel_times[15], batch_norm, detachout, pool=True)
+        ])
         self.init_weight(self.RNN, xavier_gain=3.0)
 
         block = [[{'convsc_1': [channels, channels * self.channel_times[5], 1, 1, 0]}],
@@ -44,7 +48,6 @@ class SNN(nn.Module):
 
         self.classifier = nn.Sequential(nn.Linear(channels * self.channel_times[14], channels * 1), nn.ReLU(inplace=True), nn.Dropout(p=dropout[2]), nn.Linear(channels * 1, num_action))#, nn.LogSoftmax(dim=1))#nn.Softmax(dim=1))
         self.init_weight(self.classifier)
-
 
         self.num_action = num_action
         self.RNN_layer = RNN_layer
@@ -69,7 +72,6 @@ class SNN(nn.Module):
                 m.weight.data.normal_(0, 0.01)
 
     def _make_layer(self, net_dict, batch_norm=False):
-
         layers = []
         length = len(net_dict)
         for i in range(length):
@@ -87,7 +89,6 @@ class SNN(nn.Module):
                     layers += [conv2d, nn.ReLU(inplace=True)]
         return nn.Sequential(*layers)
 
-
     def make_RNNCell(self, in_channel1, in_channel2, out_channel, batch_norm, detachout, pool=False):
         class RNN_cell(nn.Module):
             def __init__(self, in_channel, out_channel, batch_norm, pool):
@@ -103,7 +104,6 @@ class SNN(nn.Module):
                 self.pool = nn.MaxPool2d(kernel_size=2, stride=2, padding=0, ceil_mode=True)
                 self.ispool = pool
                 self.detachout = detachout
-
 
             def forward(self, x, c):
                 input_data = x
@@ -122,8 +122,6 @@ class SNN(nn.Module):
                 return output, ctrl  #, insert_content
 
         return RNN_cell(in_channel2, out_channel, batch_norm, pool)
-
-
 
     def forward(self, x):
         out0 = Variable(torch.from_numpy(np.zeros((x.shape[0],x.shape[1], self.channels, x.shape[-1]/32, x.shape[-1]/32)))).cuda().float()
@@ -231,4 +229,3 @@ def actionModel(num_action, batch_norm=False, pretrained=True, dropout=[0, 0, 0]
         print("LOAD VGG19")
 
     return model
-
